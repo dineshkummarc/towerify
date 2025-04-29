@@ -30,6 +30,10 @@ return [
         'api_username' => env('CB_API_USERNAME'),
         'api_password' => env('CB_API_PASSWORD'),
     ],
+    'deepseek' => [
+        'api' => env('DEEPSEEK_API'),
+        'api_key' => env('DEEPSEEK_API_KEY'),
+    ],
     'deepinfra' => [
         'api' => env('DEEPINFRA_API'),
         'api_key' => env('DEEPINFRA_API_KEY'),
@@ -78,5 +82,9 @@ return [
         'username' => env('CH_USERNAME'),
         'password' => env('CH_PASSWORD'),
         'database' => env('CH_DATABASE'),
+    ],
+    'sendgrid' => [
+        'api' => env('SENDGRID_API'),
+        'api_key' => env('SENDGRID_API_KEY'),
     ],
 ];

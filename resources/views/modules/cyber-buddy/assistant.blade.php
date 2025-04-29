@@ -3,18 +3,18 @@
 $conversationId = request()->query('conversation_id');
 
 if ($conversationId) {
-$conversation = \App\Modules\CyberBuddy\Models\Conversation::where('id', $conversationId)
-->where('format', \App\Modules\CyberBuddy\Models\Conversation::FORMAT_V1)
+$conversation = \App\Models\Conversation::where('id', $conversationId)
+->where('format', \App\Models\Conversation::FORMAT_V1)
 ->where('created_by', Auth::user()?->id)
 ->first();
 }
 
-$conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::create([
+$conversation = $conversation ?? \App\Models\Conversation::create([
 'thread_id' => \Illuminate\Support\Str::random(10),
 'dom' => json_encode([]),
 'autosaved' => true,
 'created_by' => Auth::user()?->id,
-'format' => \App\Modules\CyberBuddy\Models\Conversation::FORMAT_V1,
+'format' => \App\Models\Conversation::FORMAT_V1,
 ]);
 
 @endphp
@@ -336,6 +336,10 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
     display: flex
   }
 
+  .tw-avatar-color {
+    color: rgb(68, 74, 238);
+  }
+
   .tw-answer-avatar-wrapper {
     margin-right: 0.5rem;
     color: rgb(68, 74, 238);
@@ -345,17 +349,6 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
     background-color: rgba(68, 74, 238, 0.1);
     border-radius: 10000px;
     padding: 0.5rem;
-  }
-
-  .tw-answer-avatar-svg {
-    width: 1rem;
-    height: 1rem;
-    display: block;
-  }
-
-  .tw-answer-avatar-svg-rect {
-    width: 16px;
-    height: 12px
   }
 
   .tw-answer-message {
@@ -374,9 +367,22 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
 
   .tw-answer-message-html {
     /* background-color: rgb(255, 255, 255); */
-    margin-top: 1rem;
+    /* margin-top: 1rem; */
     border-radius: 8px;
     /* padding: 1rem */
+    --font-size: 16px;
+  }
+
+  .tw-answer-message-html h1 {
+    font-size: calc(var(--font-size) + 4px);
+  }
+
+  .tw-answer-message-html h2 {
+    font-size: calc(var(--font-size) + 2px);
+  }
+
+  .tw-answer-message-html h3 {
+    font-size: calc(var(--font-size));
   }
 
   .tw-answer-timestamp {
@@ -599,8 +605,8 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
       <!-- HEADER -->
       <div class="tw-chat-header">
         <h3 class="tw-chat-header-title">
-          <img alt="Bear" fetchpriority="high" width="250" height="250" decoding="async" data-nimg="1"
-               style="color:transparent;width:50px;height:50px" src="https://www.svgrepo.com/show/10913/bear.svg">
+          <!-- <img alt="Bear" fetchpriority="high" width="250" height="250" decoding="async" data-nimg="1"
+               style="color:transparent;width:50px;height:50px" src="https://www.svgrepo.com/show/10913/bear.svg"> -->
           CyberBuddy
         </h3>
       </div>
@@ -609,6 +615,7 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
       <div class="tw-conversation-wrapper">
         <div class="tw-conversation">
           <!-- DYNAMICALLY FILLED -->
+          @include('modules.cyber-buddy._actions2')
         </div>
       </div>
 
@@ -691,15 +698,18 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
           <div class="tw-answer">
             <div class="tw-answer-avatar-wrapper">
               <div class="tw-answer-avatar">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewbox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="tw-answer-avatar-svg">
-                  <path d="M12 8V4H8" fill="none" stroke="currentColor"></path>
-                  <rect height="12" x="4" y="8" rx="2" fill="none" stroke="currentColor"
-                        class="tw-answer-avatar-svg-rect"></rect>
-                  <path d="M2 14h2" fill="none" stroke="currentColor"></path>
-                  <path d="M20 14h2" fill="none" stroke="currentColor"></path>
-                  <path d="M15 13v2" fill="none" stroke="currentColor"></path>
-                  <path d="M9 13v2" fill="none" stroke="currentColor"></path>
+                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"
+                      stroke="currentColor"  stroke-width="1"  stroke-linecap="round"  stroke-linejoin="round" class="tw-avatar-color">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M6 4m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" />
+                  <path d="M12 2v2" />
+                  <path d="M9 12v9" />
+                  <path d="M15 12v9" />
+                  <path d="M5 16l4 -2" />
+                  <path d="M15 14l4 2" />
+                  <path d="M9 18h6" />
+                  <path d="M10 8v.01" />
+                  <path d="M14 8v.01" />
                 </svg>
               </div>
             </div>
@@ -747,15 +757,24 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
       return `${year}-${month}-${day} ${hours}:${minutes}`;
     };
 
+    const elInputField = document.querySelector('.tw-chat-footer-input');
+    if (elInputField.value.trim() !== '') {
+      const elActions = document.querySelector('.tw-actions');
+      elActions.style.display = 'none';
+    }
+
     const elDirective = document.createElement('div');
     elDirective.classList.add('tw-question-wrapper');
     elDirective.innerHTML = `
       <div class="tw-question">
         <div class="tw-question-avatar-wrapper">
           <div class="tw-question-avatar">
-            <span>
-              <img src="https://wispa-ai.vercel.app/assets/images/bot-avatars/profile.svg"/>
-            </span>
+              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"
+                    stroke="currentColor"  stroke-width="1"  stroke-linecap="round"  stroke-linejoin="round" class="tw-avatar-color">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
+                <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
+              </svg>
           </div>
         </div>
         <div class="tw-question-directive">${directive}</div>
@@ -789,15 +808,18 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
       <div class="tw-answer">
         <div class="tw-answer-avatar-wrapper">
           <div class="tw-answer-avatar">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewbox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="tw-answer-avatar-svg">
-              <path d="M12 8V4H8" fill="none" stroke="currentColor"></path>
-              <rect height="12" x="4" y="8" rx="2" fill="none" stroke="currentColor"
-                    class="tw-answer-avatar-svg-rect"></rect>
-              <path d="M2 14h2" fill="none" stroke="currentColor"></path>
-              <path d="M20 14h2" fill="none" stroke="currentColor"></path>
-              <path d="M15 13v2" fill="none" stroke="currentColor"></path>
-              <path d="M9 13v2" fill="none" stroke="currentColor"></path>
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"
+                  stroke="currentColor"  stroke-width="1"  stroke-linecap="round"  stroke-linejoin="round" class="tw-avatar-color">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <path d="M6 4m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" />
+              <path d="M12 2v2" />
+              <path d="M9 12v9" />
+              <path d="M15 12v9" />
+              <path d="M5 16l4 -2" />
+              <path d="M15 14l4 2" />
+              <path d="M9 18h6" />
+              <path d="M10 8v.01" />
+              <path d="M14 8v.01" />
             </svg>
           </div>
         </div>
@@ -826,7 +848,7 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
 
       elInputField.value = '';
 
-      axios.post('/cb/web/assistant/converse', {
+      axios.post('/assistant/converse', {
         thread_id: '{{ $conversation->thread_id }}', directive: directive
       }).then((answer) => {
         if (answer.data.success) {
@@ -844,7 +866,11 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
 
   document.addEventListener('DOMContentLoaded', () => {
 
+    const elActions = document.querySelector('.tw-actions');
     const messages = @json($conversation->thread());
+    if (elActions && messages.length <= 0) {
+      elActions.style.display = 'unset';
+    }
     messages.forEach(message => {
       if (message.role === 'user') {
         addUserDirective(message.timestamp ? new Date(message.timestamp) : new Date(), message.content);
@@ -863,6 +889,19 @@ $conversation = $conversation ?? \App\Modules\CyberBuddy\Models\Conversation::cr
     elInputField.addEventListener('focus', () => toggleButtons(true));
     elInputField.addEventListener('blur', () => toggleButtons(false));
     elSendButton.addEventListener('click', askQuestion);
+    elInputField.addEventListener('input', () => {
+      if (elActions) {
+        if (elInputField.value.trim() !== '') {
+          elActions.style.display = 'none';
+        } else if (elActions.style.display == 'none') {
+          const elQuestions = document.querySelectorAll('.tw-question');
+          const elAnswers = document.querySelectorAll('.tw-answer');
+          if (elQuestions.length === 0 && elAnswers.length === 0) {
+            elActions.style.display = 'unset';
+          }
+        }
+      }
+    });
     elInputField.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
